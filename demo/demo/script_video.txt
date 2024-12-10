@@ -1,0 +1,45 @@
+Hi, my name is Marc Maynou and in this video I will be showcasing how to perform data discovery tasks with Freyja, a tool designed to perform these same processes at scale.
+
+It is important to mention that in the paper we are submitting to the EDBT conference there is a link to a website. There we placed both this notebook as well as references to the original 
+code and other relevant materials to understand the functioning of the system. Therefore, the purpose of this video is solely to demonstrate how easy is to perform discovery tasks with 
+Freyja.
+
+We start from a given dataset that we want to analyze. We load this dataset into python, as it is the environment that we are familiar with. The data contains, for every neighborhood 
+in Barcelona the average rental price as well as characteristics of the population. We decide to develop a predictive model that, given thes two attributes is able to 
+predict the rental price. To do so, we define a simple learning model employing random forests. Once we train and test the model we obtain the following results.
+
+The results are not necessarily bad. However, it is easy to see that the base dataset is lackluster, as we are working only with two attributes that act as model features. A 
+straightforward way to fix this could be to perform a join with other datasets using the neighborhood column, importing additional features that capture
+additional properties of the Barcelona neighborhoods. This is the task we are defining: gathering new data to perform joins and increase the amount of attributes.
+
+Given a data lake, a big repository of datasets with, potentially, something that might be useful for our case, we can start the discovery process. To perform the discovery process we 
+employ profiles, succint representation of the data that capture their general properties. Using profiles for data discovery makes the process fast and scalable, as we work with 
+summaries rather than the original, large-scale data.
+
+Contrary to Freyja, most modern approaches required to interact with external and complex tools, as there is no easy way to integrate the code with well-known environments
+such as python notebooks. Freyja, on the contrary, is designed to be seamlessly employed in any python context, as the tasks are always executed over in-memory objects.
+
+To initiate the process we just have to generate the profile of the dataset we are interested in finding joins for. As you can see, we work directly with the loaded
+dataframes, without requiring additional transformations. Then, we have to obtain the profiles for all the datasets that reside in the data lake we want to explore. 
+This is all the preprocessing that is necessary.
+
+This, yet again, contrasts with most modern approaches, as they demand lenghty set-ups that require to train deep-learning architectures or other costly structures. Freyja's set
+up is kept to a minimum and, as we use profiles, it can be executed fast and in parallel fashion.
+
+Once we have the profiles we can start te online stage of the discovery process. Given the profile of a dataset to find joins for, the query column and the
+list of profiles of the data lake, what we obtain is a ranking. This ranking sorts each join between the query column and columns in the data lake by the
+quality of the join, with those in the top being more relevant. We provide both the original value of the metric as well as the normalized quality. And 
+with this we are done, we have a ranked list of the joins most likely to produce good results. Just with these two steps we can perform data discovery.
+
+As an example of a downstream task, we can also perform a straightforward data augmentation task with Freyja. By indicating the path were the data lake
+is stored and an index of the ranking, Freyja performs the joins of the two datasets, the base dataset and the selected candidate. We can test the 
+process with the top 2 datasets, and we observe that, in both cases, the results of the model improve, successfully finishing the data discovery task.
+
+As a final display of the simplicity of Freyja, we illustrate that the entire data discovery/data augmentation pipeline can be performed only with these
+lines of code.
+
+- simplicity and comparison
+
+
+
+

@@ -1,5 +1,6 @@
 package edu.upc.essi.dtim.FREYJA.predictQuality;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 
 import java.io.*;
@@ -151,6 +152,7 @@ public class PredictQuality {
         }
         writer.write("\n");
         writer.flush();
+        writer.close();
     }
 
     private void writeHeader(String distancesFilePath, Map<String, Object> distances) throws IOException {
@@ -168,6 +170,7 @@ public class PredictQuality {
         }
         writer.write("\n");
         writer.flush();
+        writer.close();
     }
 
     public double predictQuality(String path1, String path2, String att1, String att2) {
@@ -203,7 +206,7 @@ public class PredictQuality {
         return 0.0;
     }
 
-    public void calculateDistancesAttVsFolder(String dataset, String attribute, String profilesPath, String distancesPath, Boolean deleteSameDataset) {
+    public String calculateDistancesAttVsFolder(String dataset, String attribute, String profilesPath, String distancesPath, Boolean deleteSameDataset) {
         try {
             String datasetNameProfile = dataset.replace(".csv", "_profile.csv");
             String datasetNameNoCSV = dataset.replace(".csv", "_profile");
@@ -229,8 +232,12 @@ public class PredictQuality {
             // Conflicting characters are removed from the attribute name. These transformations are taken into account when executing the model
             String attributeNoConflicts = attribute.replace("/", "_").replace(": ","_");
 
-            // Write header of the distances
+            // If the distances file already exists delete it (if it is not deleted the new distances will be appended)
             String queryDistancesPath = String.valueOf(Paths.get(String.valueOf(distancesFolder), String.format("distances_%s_%s.csv", datasetNameNoCSV, attributeNoConflicts)));
+            File distancesFile = new File(queryDistancesPath);
+            distancesFile.delete();
+
+            // Write header of the distances
             writeHeader(queryDistancesPath, queryProfile);
 
             // Do not create distances with the same dataset that contains the query column (if needed)
@@ -241,34 +248,83 @@ public class PredictQuality {
             }
             File[] finalFiles = files;
 
+            List<Map<String, Object>> distancesList = Collections.synchronizedList(new ArrayList<>());
+
             // Define the number of threads and compute the distances
             ExecutorService executor = Executors.newFixedThreadPool(8);
             for (File file : finalFiles) {
                 LinkedList<Map<String, Object>> dataLakeProfiles = readCSVFile(String.valueOf(file));
                 executor.submit(() -> {
+                    List<Map<String, Object>> localDistancesList = new ArrayList<>();
                     for (Map<String, Object> dataLakeProfile : dataLakeProfiles) {
                         Map<String, Object> distances = calculateDistances(queryProfile, dataLakeProfile);
                         if (!distances.isEmpty()) {
-                            try {
-                                // Conflicting characters are removed from attribute the name. These transformations are taken into account when executing the model
-                                lock.lock();
-                                try {
-                                    writeDistances(queryDistancesPath, distances);
-                                } finally {
-                                    lock.unlock();
-                                }
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
+                            localDistancesList.add(distances);
                         }
+                    }
+
+                    synchronized (distancesList) {
+                        distancesList.addAll(localDistancesList);
+                    }
+
+                    lock.lock();
+                    try {
+                        for (Map<String, Object> distances : localDistancesList) {
+                            writeDistances(queryDistancesPath, distances);
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        lock.unlock();
                     }
                 });
             }
 
             executor.shutdown();
-            if (!executor.awaitTermination(5, TimeUnit.MINUTES)) {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
                 throw new RuntimeException("Thread pool did not terminate");
             }
+
+            // Convert distancesList to JSON and return as a string
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writeValueAsString(distancesList);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String calculateDistancesTwoFiles(String csvFilePath1, String csvFilePath2, String pathToWriteDistances) {
+        try {
+            LinkedList<Map<String, Object>> profiles1 = readCSVFile(csvFilePath1);
+            LinkedList<Map<String, Object>> profiles2 = readCSVFile(csvFilePath2);
+
+            // Remove null rows and normalize the profiles
+            profiles1.removeAll(Collections.singleton(null));
+            profiles2.removeAll(Collections.singleton(null));
+            normalizeProfile(profiles1);
+            normalizeProfile(profiles2);
+
+            List<Map<String, Object>> distancesList = new ArrayList<>();
+
+            // For every attribute of every dataset in combination of every other attribute of every other dataset,
+            // we get the profiles of both attributes and calculate the distances.
+            for (Map<String, Object> profile1: profiles1) {
+                for (Map<String, Object> profile2: profiles2) {
+                    Map<String, Object> distances = calculateDistances(profile1, profile2);
+                    if (!distances.isEmpty()) {
+                        distancesList.add(distances);
+                        try {
+                            writeDistances(pathToWriteDistances + "\\distances_two_files.csv", distances);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            }
+            // Convert distancesList to JSON and return as a string
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writeValueAsString(distancesList);
 
         } catch (Exception e) {
             throw new RuntimeException(e);

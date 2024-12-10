@@ -8,6 +8,7 @@ import edu.upc.essi.dtim.FREYJA.predictQuality.PredictQuality;
 import edu.upc.essi.dtim.FREYJA.predictQuality.Profile;
 import edu.upc.essi.dtim.FREYJA.utils.DuckDB;
 import org.apache.commons.lang3.tuple.Pair;
+import org.json.simple.JSONArray;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -65,7 +66,7 @@ public class Main {
         }
     }
 
-    public static void createProfile(String filePath, String profilePath) {
+    public static JSONArray createProfile(String filePath, String profilePath) {
         Connection conn;
         try {
             conn = DuckDB.getConnection();
@@ -74,12 +75,17 @@ public class Main {
         }
         Profile p = new Profile(conn);
 
-        p.createProfile(filePath, profilePath);
+        return p.createProfile(filePath, profilePath);
     }
 
-    public static void computeDistances(String dataset, String attribute, String profilesPath, String pathToStore) {
+    public static String computeDistances(String dataset, String attribute, String profilesPath, String pathToStore) {
         PredictQuality pq = new PredictQuality();
-        pq.calculateDistancesAttVsFolder(dataset, attribute, profilesPath, pathToStore, false);
+        return pq.calculateDistancesAttVsFolder(dataset, attribute, profilesPath, pathToStore, true);
+    }
+
+    public static String calculateDistancesTwoFiles(String csvFilePath1, String csvFilePath2, String pathToWriteDistances) {
+        PredictQuality pq = new PredictQuality();
+        return pq.calculateDistancesTwoFiles(csvFilePath1, csvFilePath2, pathToWriteDistances);
     }
 
     public static void calculateDistancesForBenchmark(String groundTruthPath, String profilesPath, String distancesPath,

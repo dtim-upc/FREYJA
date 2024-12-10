@@ -26,7 +26,7 @@ def compute_and_evaluate_ranking(model, k, step, ground_truth_path, distances_fo
   # Initialize execution time
   total_time = 0
 
-  for index, row in tqdm(pair_counts.iterrows(), total=len(pair_counts)):
+  for _, row in tqdm(pair_counts.iterrows(), total=len(pair_counts)):
       dataset = row['target_ds']
       attribute = row['target_attr']
       count = row['joins_count']

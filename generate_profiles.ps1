@@ -1,6 +1,8 @@
-# Specify the directory path
-$directoryBenchmark = "path\to\benchmark"
-$directoryStoreProfiles = "path\to\store\profiles"
+# Define parameters
+param (
+    [string]$directoryBenchmark = "path\to\benchmark",
+    [string]$directoryStoreProfiles = "path\to\store\profiles"
+)
 
 $files = Get-ChildItem -Path $directoryBenchmark -File
 
@@ -13,7 +15,7 @@ if (-not (Test-Path -Path $directoryStoreProfiles)) {
 # Define the script block to be executed in parallel
 $block = {
     Param([string] $file, [string] $directoryStoreProfiles)
-    & "C:\Java\jdk-21.0.1\bin\java.exe" -jar "path\to\FREYJA-all.jar" "createProfile" $file $directoryStoreProfiles
+    & "C:\Program Files\Java\jdk-21\bin\java.exe" -jar "C:\Projects\FREYJA\build\libs\FREYJA-all.jar" "createProfile" $file $directoryStoreProfiles
 }
 
 # Measure the time taken to execute the loop
