@@ -12,7 +12,7 @@ def prepare_data_for_model(distances, model):
 
 def compute_and_evaluate_ranking(model, k, step, ground_truth_path, distances_folder_path):
   # Read the ground truth and obtain, for every target column, the amount of candidate columns that it has a join with. This will allow us to calculate the recall,
-  # as it indicates the maximum possible joins, regardless of the value of k 
+  # as it indicates the maximum possible joins, regardless of the value of k
   ground_truth = pd.read_csv(ground_truth_path, header = 0)
   pair_counts = ground_truth.groupby(['target_ds', 'target_attr']).size().reset_index(name='joins_count')
 
@@ -26,7 +26,7 @@ def compute_and_evaluate_ranking(model, k, step, ground_truth_path, distances_fo
   # Initialize execution time
   total_time = 0
 
-  for index, row in tqdm(pair_counts.iterrows(), total=len(pair_counts)):
+  for _, row in tqdm(pair_counts.iterrows(), total=len(pair_counts)):
       dataset = row['target_ds']
       attribute = row['target_attr']
       count = row['joins_count']
@@ -34,39 +34,58 @@ def compute_and_evaluate_ranking(model, k, step, ground_truth_path, distances_fo
       st = time.time()
 
       # Read the distances and do some preprocessing
-      distances = pd.read_csv(distances_folder_path + 'distances_' + dataset.replace(".csv", "_profile_") + attribute.replace("/", "_").replace(": ","_") + ".csv", header = 0, encoding='latin1', on_bad_lines="skip")
+      distances = pd.read_csv(distances_folder_path + 'distances_' + dataset.replace(".csv", "_profile_") + attribute.replace("/", "_").replace(": ","_").replace("'","_") + ".csv", header = 0, encoding='latin1', on_bad_lines="skip")
 
       dataset_names = distances["dataset_name_2"] # We store dataset and attribute names to be used to evaluate the ranking
       attribute_names = distances["attribute_name_2"]
       distances = prepare_data_for_model(distances, model)
 
-      # Use the model to predict
-      y_pred = model.predict(distances)
-      distances["predictions"] = y_pred
+      # # Use the model to predict
+      # y_pred = model.predict(distances)
+      # distances["predictions"] = y_pred
+
+      # Use the model to predict (preventing some weird lines that might have slipped in)
+      distances_numeric = distances.apply(pd.to_numeric, errors='coerce') # Convert everything to float, invalid parsing becomes NaN
+      valid_rows = distances_numeric.dropna(axis=0, how='any') # Keep track of valid rows
+      y_pred = model.predict(valid_rows) # Predict only on valid rows
+      distances.loc[valid_rows.index, "predictions"] = y_pred # Assign predictions back only to the valid rows
 
       distances["target_ds"] = dataset_names
       distances["target_attr"] = attribute_names
 
       total_time += (time.time() - st) # In the time assessment we do not consider the evaluation of the ranking
 
-      # For every k that we want to assess the ranking of, we get the top k joins and check how many appear in the grpund truth
-      for k_iter in range(0, num_observations):
-        top_k_joins = distances.sort_values(by='predictions', ascending=False).head((k_iter + 1) * step)
+      # Precompute a lookup set of valid (candidate_ds, candidate_attr) for this query
+      valid_pairs = set(
+          ground_truth.loc[
+              (ground_truth['target_ds'] == dataset) &
+              (ground_truth['target_attr'] == attribute),
+              ['candidate_ds', 'candidate_attr']
+          ].itertuples(index=False, name=None)
+      )
 
+      # For every k that we want to assess the ranking of, we get the top k joins and check how many appear in the grpund truth
+      for k_iter in range(1, num_observations + 1):
         count_sem = 0
         ap = 0
-        for i in range(0, (k_iter + 1) * step):
-            top_k_join = top_k_joins.iloc[i]
-            result = ground_truth[(ground_truth['target_ds'] == dataset) & (ground_truth['target_attr'] == attribute) &
-                                        (ground_truth['candidate_ds'] == top_k_join["target_ds"]) & (ground_truth['candidate_attr'] == top_k_join["target_attr"])]
-            if not result.empty:
-                count_sem = count_sem + 1
-                ap = ap + (count_sem/(i + 1))
-        precision[k_iter] = precision[k_iter] + (count_sem/((k_iter + 1) * step))
-        if (count_sem != 0):
-          MAP[k_iter] = MAP[k_iter] + (ap/count_sem)
-        recall[k_iter] = recall[k_iter] + (count_sem/count)
-        max_recall[k_iter] = max_recall[k_iter] + (((k_iter + 1) * step)/count)
+        count_positions = 0
+
+        top_k_joins = distances.sort_values(by='predictions', ascending=False).head(k_iter * step)
+
+        for position in top_k_joins.itertuples(index=False):
+            pair = (position.target_ds, position.target_attr)
+            if pair in valid_pairs: 
+                count_sem += 1
+                ap += count_sem / (count_positions + 1)
+            count_positions += 1
+
+
+        precision[k_iter - 1] += count_sem / (k_iter * step)
+        if count_sem != 0:
+            MAP[k_iter - 1] += ap / count_sem
+        recall[k_iter - 1] += count_sem / count
+        max_recall[k_iter - 1] += (k_iter * step) / count
+
 
   print("AVERAGE time to load the distances and execute the model:")
   print("----%.2f----" % (total_time / len(pair_counts)))
@@ -88,10 +107,10 @@ def compute_and_evaluate_ranking(model, k, step, ground_truth_path, distances_fo
   print([round(element / len(pair_counts), 4) for element in MAP])
 
 
-ground_truth_path = 'path/to/ground_truth.csv'
-distances_folder_path = 'path/to/distances/' # Include the final "/"
-k = 20
-step = 2
+ground_truth_path = 'C:/Projects/benchmarks/omnimatch_culture_recreation/omnimatch_culture_recreation_ground_truth.csv'
+distances_folder_path = 'C:/Projects/benchmarks/omnimatch_culture_recreation/distances/distances/' # Include the final "/"
+k = 30
+step = 5
 
 model = joblib.load('predictive_model.pkl')
 compute_and_evaluate_ranking(model, k, step, ground_truth_path, distances_folder_path)

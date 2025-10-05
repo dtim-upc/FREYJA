@@ -13,7 +13,7 @@ if (-not (Test-Path -Path $directoryStoreProfiles)) {
 # Define the script block to be executed in parallel
 $block = {
     Param([string] $file, [string] $directoryStoreProfiles)
-    & "C:\Java\jdk-21.0.1\bin\java.exe" -jar "path\to\FREYJA-all.jar" "createProfile" $file $directoryStoreProfiles
+    & "C:\Java\jdk-21.0.1\bin\java.exe" -jar "path\to\FREYJA-all.jar" "createProfile" $file $directoryStoreProfiles "false"
 }
 
 # Measure the time taken to execute the loop

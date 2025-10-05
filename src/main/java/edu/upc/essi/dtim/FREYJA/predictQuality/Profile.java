@@ -32,7 +32,7 @@ public class Profile {
         this.tableName = tableName;
     }
 
-    public JSONArray createProfile(String dataPath, String pathToStoreProfile) {
+    public JSONArray createProfile(String dataPath, String pathToStoreProfile, Boolean computeNumericalProfiles) {
         try {
             // Create table from file, handle some errors and preprocess the data (trim and lowercase)
             Statement stmt = conn.createStatement();
@@ -57,11 +57,36 @@ public class Profile {
             LinkedList<Map<String,Object>> features = new LinkedList<>();
             ResultSet rs = stmt.executeQuery("DESCRIBE \"" + tableName + "\"");
             while (rs.next()) {
-                ResultSet rs2 = conn.createStatement().executeQuery("SELECT \"" + rs.getString(1) + "\" FROM \"" + tableName + "\" LIMIT 0");
+                String colName = rs.getString(1);
+                ResultSet rs2 = conn.createStatement().executeQuery("SELECT \"" + colName + "\" FROM \"" + tableName + "\" LIMIT 0");
                 ResultSetMetaData rsmd = rs2.getMetaData();
-                // We only generate the profile if the column is VARCHAR and has some value (i.e. if it is only null values, we do not create the profile)
-                if (rsmd.getColumnTypeName(1).equals("VARCHAR") && getNumberOfValues(conn, tableName, rs.getString(1)) != 0.0) {
-                    features.add(createProfileOfColumn(rs.getString(1)));
+
+                int colType = rsmd.getColumnType(1);
+
+                /// Skip numeric types
+                boolean isNumeric = false;
+                switch (colType) {
+                    case java.sql.Types.INTEGER:
+                    case java.sql.Types.BIGINT:
+                    case java.sql.Types.SMALLINT:
+                    case java.sql.Types.DECIMAL:
+                    case java.sql.Types.NUMERIC:
+                    case java.sql.Types.REAL:
+                    case java.sql.Types.FLOAT:
+                    case java.sql.Types.DOUBLE:
+                        isNumeric = true;
+                        break;
+                    default:
+                }
+
+                if (computeNumericalProfiles) {
+                    features.add(createProfileOfColumn(colName));
+                }
+                else {
+                    // Profile non-numeric columns with non-null values
+                    if (!isNumeric && getNumberOfValues(conn, tableName, colName) != 0.0) {
+                    features.add(createProfileOfColumn(colName));
+                    }
                 }
             }
 

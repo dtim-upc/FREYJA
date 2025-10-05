@@ -27,12 +27,12 @@ public class Main {
 
         switch (functionName) {
             case "createProfile":
-                if (args.length != 3) {
-                    System.out.println("2 parameters required: (1) the dataset (CSV) path and (2) the path to store the profile");
+                if (args.length != 4) {
+                    System.out.println("3 parameters required: (1) the dataset (CSV) path, (2) the path to store the profile and (3) whether to compute profiles for numerical columns or not (true / false)");
                     break;
                 }
                 System.out.println("Computing the profile");
-                createProfile(args[1], args[2]);
+                createProfile(args[1], args[2], Boolean.valueOf(args[3]));
                 break;
             case "computeDistances":
                 if (args.length != 5) {
@@ -65,7 +65,7 @@ public class Main {
         }
     }
 
-    public static void createProfile(String filePath, String profilePath) {
+    public static void createProfile(String filePath, String profilePath, Boolean computeNumericalProfiles) {
         Connection conn;
         try {
             conn = DuckDB.getConnection();
@@ -74,7 +74,7 @@ public class Main {
         }
         Profile p = new Profile(conn);
 
-        p.createProfile(filePath, profilePath);
+        p.createProfile(filePath, profilePath, computeNumericalProfiles);
     }
 
     public static void computeDistances(String dataset, String attribute, String profilesPath, String pathToStore) {

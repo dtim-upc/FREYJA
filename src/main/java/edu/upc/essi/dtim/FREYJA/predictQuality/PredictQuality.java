@@ -227,7 +227,7 @@ public class PredictQuality {
             String attributeNoConflicts = attribute.replace("/", "_").replace(": ","_");
 
             // Write header of the distances
-            String queryDistancesPath = String.valueOf(Paths.get(String.valueOf(distancesFolder), String.format("distances_%s_%s.csv", dataset, attributeNoConflicts)));
+            String queryDistancesPath = String.valueOf(Paths.get(String.valueOf(distancesFolder), String.format("distances_%s_%s.csv", dataset.replace(".csv", "_profile"), attributeNoConflicts)));
             writeHeader(queryDistancesPath, queryProfile);
 
             // Do not create distances with the same dataset that contains the query column (if needed)
