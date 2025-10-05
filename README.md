@@ -10,6 +10,7 @@ As of now, FREYJA is an experimental tool, so its full execution is still not co
 As stated, FREYJA is a lightweight system, which implies that the requirements to execute it ar minimal. Namely, these are:
 - Windows system: FREYJA has been developed and tested on Windows, so its correct functionality on other operative systems is not guaranteed.
 - Java, preferably Java SDK 21, as it was the one used to develop the tool.
+- Java, preferably Python 3.9, as it was the one used to develop the tool.
 - Gradle: you can download and install Gradle from the [official website](https://gradle.org/install/). If on Windows, remember to restart the computer so the changes in the environment variables are stored.
 
 Gradle is required to generate the JAR file that will contain two of the FREYJA functionalities stated above. To do so, clone this repository and navigate to the folder where it is located. Then execute the following commands:
@@ -17,7 +18,7 @@ Gradle is required to generate the JAR file that will contain two of the FREYJA 
 ```
 gradle build
 ```
-
+**Note:** In Windows you might need to set the *JAVA_HOME* enviromental variable pointing to the folder of the Java SDK, and then modify the *path* variable so that it also points to *JAVA_HOME/bin*
 ```
 gradle build shadowJar
 ```
@@ -51,7 +52,11 @@ Additionally, the number of execution threads to be used can be modified via the
 
 After these parameters have been set, the PowerShell can be executed with the following command (in Windows):
 ```
-generate_profiles.ps1
+powershell -File "C:\path\to\generate_profiles.ps1"
+```
+**Note:** In Windows you might need to change the PowerShell execution policy. To do so, open PowerShell as and administrator and execute the following line:
+```
+Set-ExecutionPolicy Unrestricted
 ```
 
 **IMPORTANT NOTE:** Due to an unknown behavior in the DuckDB library (which we employ as a temporary database to generate the profile metrics), each time a profile is generated a temporal file (_libduckdb_java_) is created in the temporal folder, which in Windows is located in:
@@ -85,12 +90,15 @@ java -jar FREYJA-all.jar computeDistancesForBenchmark path\to\ground_truth.csv h
 
 **Note 1:** By default, the amount of execution threats is set to 8. This can be modified in the _calculateDistancesAttVsFolder_ function, in the [PredictQuality](./src/main/java/edu/upc/essi/dtim/FREYJA/predictQuality/PredictQuality.java) class.
 
-**Note 2:** By default, the distance are computed between the query column and **all** the columns of the benchmark, which also includes the query column. To prevent the computation of distances with itself, go to the [Main](./src/main/java/edu/upc/essi/dtim/FREYJA/Main.java) class and set the last parameter of the _calculateDistancesAttVsFolder_ function to _true_.
+**Note 2:** By default, the distance are computed between the query column and **all** the columns of the benchmark, which also includes the query column itself. To prevent the computation of distances with itself, go to the [Main](./src/main/java/edu/upc/essi/dtim/FREYJA/Main.java) class and set the last parameter of the _calculateDistancesAttVsFolder_ function to _true_.
 
 ### 3. Predictive model
 The last step is to execute the predictive model, which generates a score for each potential join in the data lake. This represents the predicted quality of the join, with high scores indicating a higher chance of a significant join than lower scores. The set of potential joins can be sorted based on the scores, indicating at the top of the ranking those matches that have the highest potential of being joins.
 
-This model is contained in the [model](./model) folder (_predictive_model.pkl_). The easiest way to execute the model and obtain a ranking is via the _get_ranking.py_ script. The code requires the following parameters:
+First, download the required packages defined in the *requirements.txt* file.
+**Note:** In Windows you might need to download Microsoft Visual C++ 14.0 for the sklearn package. You can do so [here](Microsoft Visual C++ 14.0)
+
+The model is contained in the [model](./model) folder (_predictive_model.pkl_). The easiest way to execute the model and obtain a ranking is via the _get_ranking.py_ script. The code requires the following parameters:
 - _distance_folder_path_: path to the distances' folder.
 - _k_: size of the ranking to be generated.
 - _dataset_: name of the query dataset.
