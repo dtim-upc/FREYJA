@@ -222,7 +222,7 @@ public class Profile {
                 try {
                     Connection conn = DuckDB.getConnection();
                     Profile p = new Profile(conn, "table" + fileNumber);
-                    p.createProfile(String.valueOf(file), pathToStore);
+                    p.createProfile(String.valueOf(file), pathToStore, false);
                     System.out.println("File " + fileNumber + " out of " + files.length + ": " + file);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
