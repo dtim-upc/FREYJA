@@ -3,7 +3,7 @@ This repository contains our own implementation for [*WarpGate: A Semantic Join 
 
 WarpGate works by embedding table columns into a high-dimensional vector space, so that semantically similar / joinable columns end up close together. It also uses locality-sensitive hashing (SimHash) to index those embeddings to allow fast approximate nearest neighbor lookup. Since data warehouses often contain huge tables, the paper addresses efficiency by sampling (so you don’t need to read entire tables) and shows that embeddings from sampled data still preserve enough signal to make good join suggestions. They integrate the system into a BI product (Sigma Workbooks), where users can request top-k candidate joinable columns through a “Add column via lookup” feature. The evaluation shows WarpGate is better than several baselines in precision/recall, is sample efficient, and scales to large tables.
 
-WarpGate acts as a relevant baseline for our analyses, given that it was one of the first systems to employ an embedding-based approach for the task of join discovery. Unfortunately, no open implementation is available. Hence, we developed our own version following the indications of the original paper
+WarpGate acts as a relevant baseline for our analyses, given that it was one of the first systems to employ an embedding-based approach for the task of join discovery. Unfortunately, no open implementation is available. Hence, we developed our own version following the indications of the original paper.
 
 ## Implementation Details
 WarpGate's mechanism follows a straightforward, two-step process:
@@ -50,8 +50,9 @@ pip install torch-scatter -f https://data.pyg.org/whl/torch-2.3.0+cpu.html
 ```
 pip install torch-scatter -f https://data.pyg.org/whl/torch-2.3.0+cu121.html
 ```
+The code is prepared to use CUDA environments if these exist.
 
-## Creating Embeddings
+## Step 1: Creating Embeddings
 The first step involved the generation of the embeddings for all the columns in the data lake. The necessary code is in file `1_create_embeddings.py`. There are two variables to modify:
 - `datalake_path`: path to the folder where the data is contained. This should be a list of CSV files.
 - `embeddings_apth`: directory to store the embeddings. By default, it is located in a folder in the same directory, divided in subfolder by benchmarks.
@@ -71,7 +72,7 @@ The code will iterate over all the CSV files in `datalake_path` and generate the
 Note that, by default, these files are generated every 100 CSV files processed. Hence, if there is some error during the generation of the embeddings, there is no need to repeat the entire process.
 
 
-## Semantic Search
+## Step 2: Semantic Search
 Once the embeddings have been obtained, we can perform similarity search to detect similar columns; file `2_search.py`.
 
 In this file you will find an `LSH` index class, used to build an LSH index as specified in the original paper. The index parameters are the recommended for such an index.
