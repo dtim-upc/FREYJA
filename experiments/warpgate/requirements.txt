@@ -1,0 +1,13 @@
+transformers
+sentencepiece
+datasets
+accelerate
+numpy==1.26
+torch==2.3
+
+ujson
+msgpack
+redis
+zmq
+h5py
+# install torch-scatter following the README instructions
