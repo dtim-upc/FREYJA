@@ -1,0 +1,7 @@
+sentence-transformers
+torch
+pandas
+faiss-cpu
+datasets
+accelerate
+duckdb
