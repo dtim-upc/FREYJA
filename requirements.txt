@@ -9,6 +9,8 @@ matplotlib
 
 tqdm
 
+duckdb
+
 scikit-learn
 xgboost
 lightgbm
