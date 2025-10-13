@@ -3,21 +3,35 @@ This folder contains modified versions of ground truths from popular benchmarks.
 - For large ground truths (i.e. D3L and TUS Big) we have gathered a sample of the original data.
 
 The data included in this folder presents the following characteristics:
-- D3L:
-	- Link: https://github.com/alex-bogatu/DataSpiders
-	- **Sample** of 100 query columns, with k >= 100
 - FREYJA
-	- Link: https://mydisk.cs.upc.edu/s/QHJbKcyeacxq35f
+	- [Link](https://mydisk.cs.upc.edu/s/QHJbKcyeacxq35f)
 	- 50 query columns, with k >= 10
+	- Test settings: starting from k = 1 and until k = 10, with k increasing by 1 (i.e. test for k in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), for a total of 10 results.
+- D3L:
+	- [Link](https://github.com/alex-bogatu/DataSpiders)
+	- **Sample** of 100 query columns, with k >= 100
+	- Test settings: starting from k = 10 and until k = 100, with k increasing by 10 (i.e. test for k in [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]), for a total of 10 results.
 - Santos Small
-	- Link: https://zenodo.org/records/7758091 (santos_benchmark.zip)
+	- [Link](https://zenodo.org/records/7758091) (santos_benchmark.zip)
 	- 50 query columns, with k >= 10
+	- Test settings: starting from k = 1 and until k = 10, with k increasing by 1 (i.e. test for k in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), for a total of 10 results.
 - Santos Big
-	- Link: https://zenodo.org/records/7758091 (real_data_lake_benchmark.zip)
+	- [Link](https://zenodo.org/records/7758091) (real_data_lake_benchmark.zip)
     - 80 query columns (with no joins defined)
+	- Test settings: none, tested for efficiency.
 - TUS Small
-	- Link: https://github.com/RJMillerLab/table-union-search-benchmark
+	- [Link](https://github.com/RJMillerLab/table-union-search-benchmark)
     - 100 query columns, with k >= 60
+	- Test settings: starting from k = 10 and until k = 60, with k increasing by 10 (i.e. test for k in [10, 20, 30, 40, 50, 60]), for a total of 6 results.
 - TUS Big
-	- Link: https://github.com/RJMillerLab/table-union-search-benchmark
+	- [Link](https://github.com/RJMillerLab/table-union-search-benchmark)
     - **Sample** of 100 query columns, with k >= 60
+	- Test settings: starting from k = 10 and until k = 60, with k increasing by 10 (i.e. test for k in [10, 20, 30, 40, 50, 60]), for a total of 6 results.
+- Omnimatch Culture Recreation
+	- [Link](https://github.com/amazon-science/omnimatch?tab=readme-ov-file#datasets-and-other-files)
+	- **Sample** of 50 query columns, with k >= 30.
+	- Test settings: starting from k = 5 and until k = 30, with k increasing by 5 (i.e. test for k in [5, 10, 15, 20, 25, 30]), for a total of 6 results.
+- Omnimatch City governemtn
+	- [Link](https://github.com/amazon-science/omnimatch?tab=readme-ov-file#datasets-and-other-files)
+	- **Sample** of 50 query columns, with k >= 30.
+	- Test settings: starting from k = 5 and until k = 30, with k increasing by 5 (i.e. test for k in [5, 10, 15, 20, 25, 30]), for a total of 6 results
