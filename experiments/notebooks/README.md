@@ -1,0 +1,1 @@
+This folder contains four notebooks with additional experiments and results, product of the development of Freyja. For an overview of what each notebook contains, as well as a breakdown of the most important results, head to the project's [companion website](https://freyja-data-discovery.github.io/)

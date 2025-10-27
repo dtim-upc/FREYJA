@@ -9,8 +9,8 @@ As of now, FREYJA is an experimental tool, so its full execution is still not co
 ### Requirements
 As stated, FREYJA is a lightweight system, which implies that the requirements to execute it ar minimal. Namely, these are:
 - Windows system: FREYJA has been developed and tested on Windows, so its correct functionality on other operative systems is not guaranteed.
-- Java, preferably Java SDK 21, as it was the one used to develop the tool.
-- Java, preferably Python 3.9, as it was the one used to develop the tool.
+- Java, preferably Java SDK 21, as it was the one used to develop the tool (can be downloaded [here](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html)).
+- Python, preferably Python 3.9, as it was the one used to develop the tool. Alternatively, conda environments can be employed.
 - Gradle: you can download and install Gradle from the [official website](https://gradle.org/install/). If on Windows, remember to restart the computer so the changes in the environment variables are stored.
 
 Gradle is required to generate the JAR file that will contain two of the FREYJA functionalities stated above. To do so, clone this repository and navigate to the folder where it is located. Then execute the following commands:
@@ -23,9 +23,9 @@ gradle build
 gradle build shadowJar
 ```
 
-These commands will, respectively, build the project (compile the code, run tests, etc.) and create a [_shadow JAR_](https://github.com/johnrengelman/shadow) (i.e. fat/uber JAR), which contains all classes from dependent jars zipped directly inside it in the correct directory structure. This prevents dependency problems. This JAR can be found in:
+These commands will, respectively, build the project (compile the code, run tests, etc.) and create a [_shadow JAR_](https://github.com/johnrengelman/shadow) (i.e. fat/uber JAR), which contains all classes from dependent jars zipped directly inside it in the correct directory structure. This prevents dependency problems. This JAR can be found in the following directory, under the name of ``FREYJA-all.jar``:
 ```
-cd build\libs\FREYJA-all.jar
+cd build\libs\
 ```
 
 ### 1. Generate profiles
@@ -43,10 +43,11 @@ It is recommended to generate the profiles with the script. There are several pa
 
 Inside the _$block_ script, we find the following line:
 ```
-& "path\to\java.exe" -jar "path\to\FREYJA-all.jar" "createProfile" $file $directoryStoreProfiles
+& "path\to\java.exe" -jar "path\to\FREYJA-all.jar" "createProfile" $file $directoryStoreProfiles "false"
 ```
-- Path to the java executable. It is recommended to add the entire path to the Java executable to prevent versioning problems.
-- Path to the FREYJA jar.
+- ``"path\to\java.exe"`` indicates the path to the java executable. It is recommended to add the entire path to the Java executable to prevent versioning problems.
+- ``"path\to\FREYJA-all.jar"`` indicates the path to the FREYJA jar.
+- The `false` at the end indicates whether we want profiles for non-string data. By default, this is set to false as join discovery is tipically done via string-based columns. Nonetheless, non-string data (such as dates) might be used to perform joins. For example, the two OmniMatch benchmarks used in the development of the paper require joins between non-string data, so this parameter has to be set to `true`.
 
 Additionally, the number of execution threads to be used can be modified via the _$MaxThreads_ variable.
 
@@ -88,15 +89,18 @@ This will generate all distances for all query columns of a benchmark. If the gr
 java -jar FREYJA-all.jar computeDistancesForBenchmark path\to\ground_truth.csv header_name_for_query_dataset_column header_name_for_query_attribute_column
 ```
 
-**Note 1:** By default, the amount of execution threats is set to 8. This can be modified in the _calculateDistancesAttVsFolder_ function, in the [PredictQuality](./src/main/java/edu/upc/essi/dtim/FREYJA/predictQuality/PredictQuality.java) class.
+**Note 1:** By default, the amount of execution threats is set to 8. This can be modified in the ``calculateDistancesForBenchmark`` function, in the [Main](./src/main/java/edu/upc/essi/dtim/FREYJA/Main.java) class.
 
-**Note 2:** By default, the distance are computed between the query column and **all** the columns of the benchmark, which also includes the query column itself. To prevent the computation of distances with itself, go to the [Main](./src/main/java/edu/upc/essi/dtim/FREYJA/Main.java) class and set the last parameter of the _calculateDistancesAttVsFolder_ function to _true_.
+**Note 2:** By default, the distance are computed between the query column and **all** the columns of the benchmark, which also includes the query column itself. To prevent the computation of distances with itself, go to the [Main](./src/main/java/edu/upc/essi/dtim/FREYJA/Main.java) class and set the last parameter of the ``calculateDistancesAttVsFolder`` function to ``true``.
 
 ### 3. Predictive model
 The last step is to execute the predictive model, which generates a score for each potential join in the data lake. This represents the predicted quality of the join, with high scores indicating a higher chance of a significant join than lower scores. The set of potential joins can be sorted based on the scores, indicating at the top of the ranking those matches that have the highest potential of being joins.
 
-First, download the required packages defined in the *requirements.txt* file.
-**Note:** In Windows you might need to download Microsoft Visual C++ 14.0 for the sklearn package. You can do so [here](Microsoft Visual C++ 14.0)
+First, navigate to the [model](./model) folder and install the necessary dependencies using pip:
+```
+pip install -r requirements.txt
+```
+It is recommended to use a conda environment to prevent conflicts with the libraries.
 
 The model is contained in the [model](./model) folder (_predictive_model.pkl_). The easiest way to execute the model and obtain a ranking is via the _get_ranking.py_ script. The code requires the following parameters:
 - _distance_folder_path_: path to the distances' folder.
