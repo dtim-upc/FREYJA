@@ -61,31 +61,13 @@ public class Profile {
                 ResultSet rs2 = conn.createStatement().executeQuery("SELECT \"" + colName + "\" FROM \"" + tableName + "\" LIMIT 0");
                 ResultSetMetaData rsmd = rs2.getMetaData();
 
-                int colType = rsmd.getColumnType(1);
-
-                /// Skip numeric types
-                boolean isNumeric = false;
-                switch (colType) {
-                    case java.sql.Types.INTEGER:
-                    case java.sql.Types.BIGINT:
-                    case java.sql.Types.SMALLINT:
-                    case java.sql.Types.DECIMAL:
-                    case java.sql.Types.NUMERIC:
-                    case java.sql.Types.REAL:
-                    case java.sql.Types.FLOAT:
-                    case java.sql.Types.DOUBLE:
-                        isNumeric = true;
-                        break;
-                    default:
-                }
-
                 if (computeNumericalProfiles) {
                     features.add(createProfileOfColumn(colName));
                 }
                 else {
                     // Profile non-numeric columns with non-null values
-                    if (!isNumeric && getNumberOfValues(conn, tableName, colName) != 0.0) {
-                    features.add(createProfileOfColumn(colName));
+                    if (rsmd.getColumnTypeName(1).equals("VARCHAR") && getNumberOfValues(conn, tableName, rs.getString(1)) != 0.0) {
+                        features.add(createProfileOfColumn(colName));
                     }
                 }
             }

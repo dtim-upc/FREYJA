@@ -210,7 +210,6 @@ public class PredictQuality {
                 throw new RuntimeException("No files found in the specified profiles path");
             }
 
-            // Get the profile of the query column
             LinkedList<Map<String, Object>> profilesDataset = readCSVFile(String.valueOf(Paths.get(profilesPath, datasetNameProfile)));
             profilesDataset.removeAll(Collections.singleton(null));
             normalizeProfile(profilesDataset);
@@ -219,47 +218,28 @@ public class PredictQuality {
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Query profile not found for attribute: " + attribute));
 
-            // Create distances folder if it does not exist
             Path distancesFolder = Paths.get(distancesPath).resolve("distances");
             Files.createDirectories(distancesFolder);
 
-            // Conflicting characters are removed from the attribute name. These transformations are taken into account when executing the model
             String attributeNoConflicts = attribute.replace("/", "_").replace(": ","_");
 
-            // Write header of the distances
             String queryDistancesPath = String.valueOf(Paths.get(String.valueOf(distancesFolder), String.format("distances_%s_%s.csv", dataset.replace(".csv", "_profile"), attributeNoConflicts)));
             writeHeader(queryDistancesPath, queryProfile);
 
-            // Do not create distances with the same dataset that contains the query column (if needed)
             if (deleteSameDataset) {
                 List<File> fileList = new ArrayList<>(Arrays.asList(files));
                 fileList.removeIf(file -> file.getName().equals(datasetNameProfile));
                 files = fileList.toArray(new File[0]);
             }
-            File[] finalFiles = files;
 
-            // Define the number of threads and compute the distances
-            ExecutorService executor = Executors.newFixedThreadPool(8);
-            for (File file : finalFiles) {
+            for (File file : files) {
                 LinkedList<Map<String, Object>> dataLakeProfiles = readCSVFile(String.valueOf(file));
-                executor.submit(() -> {
-                    for (Map<String, Object> dataLakeProfile : dataLakeProfiles) {
-                        Map<String, Object> distances = calculateDistances(queryProfile, dataLakeProfile);
-                        if (!distances.isEmpty()) {
-                            try {
-                                // Conflicting characters are removed from attribute the name. These transformations are taken into account when executing the model
-                                writeDistances(queryDistancesPath, distances);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
+                for (Map<String, Object> dataLakeProfile : dataLakeProfiles) {
+                    Map<String, Object> distances = calculateDistances(queryProfile, dataLakeProfile);
+                    if (!distances.isEmpty()) {
+                        writeDistances(queryDistancesPath, distances);
                     }
-                });
-            }
-
-            executor.shutdown();
-            if (!executor.awaitTermination(5, TimeUnit.MINUTES)) {
-                throw new RuntimeException("Thread pool did not terminate");
+                }
             }
 
         } catch (Exception e) {

@@ -16,6 +16,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 public class Main {
     public static void main(String[] args)  {
         if (args.length < 1) {
@@ -83,14 +87,13 @@ public class Main {
     }
 
     public static void calculateDistancesForBenchmark(String groundTruthPath, String profilesPath, String distancesPath,
-                                                      String queryDatasetColumnName, String queryAttributeColumnName) {
+                                                  String queryDatasetColumnName, String queryAttributeColumnName) {
         try {
             PredictQuality pq = new PredictQuality();
 
             List<Pair<String, String>> listOfQueryColumns = new ArrayList<>();
             Set<Pair<String, String>> seenPairs = new HashSet<>();
 
-            // From the ground truth we extract for which columns we need to compute the distances
             try (CSVParser parser = new CSVParser(new FileReader(Paths.get(groundTruthPath).toFile()),
                     CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
 
@@ -99,7 +102,7 @@ public class Main {
                     String attribute = record.get(queryAttributeColumnName);
                     Pair<String, String> pair = Pair.of(dataset, attribute);
 
-                    if (seenPairs.add(pair)) { // Only add if it's not already in the set
+                    if (seenPairs.add(pair)) {
                         listOfQueryColumns.add(pair);
                     }
                 }
@@ -109,13 +112,24 @@ public class Main {
 
             long startTime = System.currentTimeMillis();
 
-            for (int i = 0; i < listOfQueryColumns.size(); i++) {
-                Pair<String, String> pair = listOfQueryColumns.get(i);
-                String dataset = pair.getLeft();
-                String attribute = pair.getRight();
-                pq.calculateDistancesAttVsFolder(dataset, attribute, profilesPath, distancesPath, false);
+            // Create a thread pool for parallel distance computation
+            // ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+            ExecutorService executor = Executors.newFixedThreadPool(8);
 
-                System.out.printf("Query column %d out of %d%n", i + 1, listOfQueryColumns.size());
+            for (int i = 0; i < listOfQueryColumns.size(); i++) {
+                final int index = i;
+                Pair<String, String> pair = listOfQueryColumns.get(i);
+                executor.submit(() -> {
+                    String dataset = pair.getLeft();
+                    String attribute = pair.getRight();
+                    pq.calculateDistancesAttVsFolder(dataset, attribute, profilesPath, distancesPath, false);
+                    System.out.printf("Query column %d out of %d%n", index + 1, listOfQueryColumns.size());
+                });
+            }
+
+            executor.shutdown();
+            if (!executor.awaitTermination(30, TimeUnit.MINUTES)) {
+                throw new RuntimeException("Thread pool did not terminate in time");
             }
 
             long endTime = System.currentTimeMillis();
