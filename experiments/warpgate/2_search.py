@@ -155,12 +155,12 @@ def compute_and_evaluate_ranking(k, step, ground_truth_path, metadata, embedding
 
     return [round(element / len(pair_counts), 4) for element in precision]
 
-datalake_name = "omnimatch_culture_recreation"
+datalake_name = "santos_small"
 embeddings = np.load(f"embeddings/{datalake_name}/embeddings.npy")
 metadata = pd.read_csv(f"embeddings/{datalake_name}/column_metadata.csv")
-ground_truth_path = '../benchmarks/omnimatch_culture_recreation/omnimatch_culture_recreation_ground_truth.csv'
-k = 30
-step = 5
+ground_truth_path = f'C:/Projects/{datalake_name}/{datalake_name}_ground_truth.csv'
+k = 10
+step = 1
 
 # Normalize embeddings once up front and build index
 embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)

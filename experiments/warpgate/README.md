@@ -28,7 +28,7 @@ Once embeddings are generated, we build the LSH index, which buckets embeddings 
 #### TaBERT model
 As stated above, we use the [TaBERT-large-K3](https://github.com/facebookresearch/TaBERT) version. The indicated link points to the TaBERT github page. There, you can find a section with *pre-trained models*, pointing to a Google Drive link. Access the link and download the *tabert_base_large_k3.tar.gz* file (if you want to employ other versions, there should be no issue, although the results might vary).
 
-In this repository you will find a *models* folder. Unzip the downloaded file there. You should be left with something like *tabert_large_k3*.
+In this repository you will find a *models* folder. Unzip the downloaded file there. You should be left with a folder with the name *tabert_large_k3*.
 
 You will also note a *TaBERT* folder in the repository. This folder contains a reduced version of the original TaBERT code, with only the required elements to develop our task.
 
@@ -46,8 +46,11 @@ Additionally, you will have to install `torch_scatter`, a PyTorch extension used
 ```
 pip install torch-scatter -f https://data.pyg.org/whl/torch-2.3.0+cpu.html
 ```
-- If you want to use GPU, you will need to check which CUDA version is supported by your GPU and then run the following command. For CUDA 1.21, it would be:
+- If you want to use GPU, you will need to check which CUDA version is supported by your GPU and then run the following command (you can check this by running `nvidia-smi`). For CUDA 1.21, it would be:
 ```
+pip uninstall -y torch torch-scatter
+
+pip install torch --index-url https://download.pytorch.org/whl/cu121
 pip install torch-scatter -f https://data.pyg.org/whl/torch-2.3.0+cu121.html
 ```
 The code is prepared to use CUDA environments if these exist.

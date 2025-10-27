@@ -5,6 +5,9 @@ import sys
 import numpy as np
 import torch  # needed for GPU support
 
+print(torch.__version__)
+print(torch.version.cuda)
+
 sys.path.append(os.path.join(os.path.dirname(__file__), 'TaBERT'))
 from TaBERT.table_bert import Table, Column
 from TaBERT.table_bert.table_bert import TableBertModel
@@ -18,8 +21,9 @@ model = TableBertModel.from_pretrained('model/tabert_large_k3/model.bin')
 model.to(device)  # move model to GPU if available
 model.eval()
 
-datalake_path = "C:/Projects/santos_small/datalake"
-embeddings_path = "embeddings/santos_small"
+datalake_name = "santos_small"
+datalake_path = f"C:/Projects/{datalake_name}/datalake"
+embeddings_path = f"embeddings/{datalake_name}"
 os.makedirs(embeddings_path, exist_ok=True)
 
 all_embeddings = []
