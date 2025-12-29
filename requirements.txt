@@ -1,8 +1,31 @@
-duckdb
-tqdm
-pandas
+# Basics
 numpy
+pandas
 scipy
-jellyfish
-Levenshtein
+statsmodels
+
+seaborn
+matplotlib
+
+tqdm
+
+duckdb
+
+scikit-learn
+xgboost
+lightgbm
+catboost
 joblib
+
+# Prevent pip/notebook warnings
+matplotlib-inline 
+nest-asyncio 
+psutil 
+tornado 
+traitlets 
+exceptiongroup 
+pygments 
+typing-extensions 
+importlib-metadata
+wcwidth
+ipywidgets
