@@ -6,3 +6,6 @@ scipy
 jellyfish
 Levenshtein
 joblib
+uvicorn
+fastapi
+scikit-learn

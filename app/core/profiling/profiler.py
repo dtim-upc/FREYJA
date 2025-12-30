@@ -10,6 +10,7 @@ import duckdb
 import pandas as pd
 from tqdm import tqdm
 import ast
+import time
 
 
 @dataclass
@@ -242,8 +243,7 @@ class DataProfilerWorker:
                 # Load CSV into a DuckDB table.
                 try:
                     con.execute(f""" CREATE OR REPLACE TABLE "{table_name}" AS SELECT * FROM read_csv_auto('{csv_path.as_posix()}',
-                            header = TRUE, ignore_errors = TRUE, sample_size = 100, strict_mode = false, all_varchar = true);""")
-                    # , nullstr = 'NULL,null'
+                            header = TRUE, ignore_errors = TRUE, sample_size = 100, strict_mode = false, parallel = TRUE);""")
                 except Exception:
                     # Fallback: use pandas for problematic files. That is, read the data as a dataframe skipping the bad rows and then store in DuckDB
                     df = pd.read_csv(csv_path, dtype=str, on_bad_lines='skip')
@@ -327,7 +327,8 @@ class DataProfiler:
         futures = []
         results = []
         errors = []
-        
+        start_time = time.time()
+
         with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
             # Submit all tasks
             for csv_path in csv_files:
@@ -349,6 +350,8 @@ class DataProfiler:
                     logger.error(text)
                     errors.append(text)
 
+        total_time = time.time() - start_time
+
         if not results:
             error = "No profiles were produced successfully."
             logger.error(error)
@@ -359,9 +362,8 @@ class DataProfiler:
             all_profiles = pd.concat(results, ignore_index=True)
             all_profiles.to_csv(self.config.output_profiles_path, index=False)
         except Exception as e:
-            error = f"Failed to concatenate or save raw profiles: {e}"
-            logger.error(error)
-            return error
+            logger.error(e)
+            raise
 
         # Normalize the profiles
         try:
@@ -370,9 +372,8 @@ class DataProfiler:
             all_profiles_normalized = all_profiles_normalized.round(6)
             all_profiles_normalized.to_csv(output_profiles_path_normalized, index=False)
         except Exception as e:
-            error = f"Failed to normalize profiles or store normalized profiles: {e}"
-            logger.error(error)
-            return error
+            logger.error(e)
+            raise
 
         # Preprocess the profiles
         try:
@@ -380,12 +381,11 @@ class DataProfiler:
             output_profiles_path_preprocessed = output_profiles_path_normalized.with_suffix(".pkl")
             all_profiles_preprocessed.to_pickle(output_profiles_path_preprocessed)
         except Exception as e:
-            error = f"Failed to preprocess profiles or store preprocessed profiles: {e}"
-            logger.error(error)
-            return error
+            logger.error(e)
+            raise
 
-        logger.info(f"Saved profiles to: {self.config.output_profiles_path}")
+        logger.info(f"Profiling completed (time -> {total_time:.4f})")
         if not errors:
-            return f"Profiling completed. Execution finished without errors"
+            return f"Profiling completed (time -> {total_time:.4f}). Execution finished without errors"
         else:
-            return f"Profiling completed. Some tables could not be processed: {errors}"
+            return f"Profiling completed (time -> {total_time:.4f}). Some tables could not be processed: {errors}"

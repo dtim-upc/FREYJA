@@ -112,6 +112,8 @@ class ComputeDistances:
         distance_df.insert(0, "attribute_name", self.query_attribute)
 
         final_time = time.time() - start_time
+        # Note that when computing the time we do not take into account the time needed to store the data. This is because it is an overhead that is not
+        # strictly needed, as we could store the differences in memory. 
 
         safe_name = f"{self.query_dataset.replace('.csv', '_profile')}_{self.query_attribute}".replace("/", "_").replace("\\", "_")
         output_path = self.config.output_distances_path / f"distances_{safe_name}.csv"
@@ -147,8 +149,7 @@ class ComputeDistances:
         try:
             elapsed = self.compute_distances_for_query()
         except Exception as e:
-            error = f"⚠ Failed for {self.query_attribute} in {self.query_dataset}: {e}"
-            logger.error(error)
+            logger.error(f"Failed for {self.query_attribute} in {self.query_dataset}: {e}")
 
         logger.info(f"Execution time to compute distances for a single query: {elapsed:.4f} seconds")
 
@@ -170,11 +171,12 @@ class ComputeDistances:
                 total_time += elapsed
 
             except Exception as e:
-                error = f"⚠ Failed for {self.query_attribute} in {self.query_dataset}: {e}"
+                error = f"Failed for {self.query_attribute} in {self.query_dataset}: {e}"
                 logger.error(error)
                 errors.append(error)
 
-        logger.info(f"Execution time to compute distances for benchmark evaluation: {total_time:.4f} seconds")
+        logger.info(f"TOTAL time needed to compute distances for benchmark evaluation: {total_time:.4f}")
+        logger.info(f"AVERAGE time needed to compute distances for benchmark evaluation: {total_time / len(queries):.4f}")
 
         if not errors:
             return f"Distances computation for benchmark evaluation completed (time -> {total_time:.4f}). Execution finished without errors"
@@ -195,7 +197,7 @@ class ComputeDistances:
                 )
                 results.append(dist_row)
             except Exception as e:
-                error = f"⚠ Failed for {row.att_name} in {row.ds_name} / {row.att_name_2} in {row.ds_name_2}: {e}"
+                error = f"Failed for {row.att_name} in {row.ds_name} / {row.att_name_2} in {row.ds_name_2}: {e}"
                 logger.error(error)
                 errors.append(error)
 

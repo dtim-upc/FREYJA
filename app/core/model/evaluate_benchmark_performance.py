@@ -60,6 +60,7 @@ class ModelExecution:
 
         except Exception as e:
             logger.error(e)
+            raise
 
         return top_k_joins
 
@@ -133,14 +134,15 @@ class ModelExecution:
             normalized_recall_scores = [round((rn / len(pair_counts)) / (mr / len(pair_counts)), 4) for rn, mr in zip(recall, max_recall)]
             map_scores = [round(m / len(pair_counts), 4) for m in MAP]
 
-            logger.info("Precisions:", precision_scores)
-            logger.info("Recall (raw):", raw_recall_scores)
-            logger.info("Maximum recall:", maximum_recall_scores)
-            logger.info("Recall (normalized):", normalized_recall_scores)
-            logger.info("MAP:", map_scores)
+            logger.info(f"Precisions: {precision_scores}")
+            logger.info(f"Recall (raw): {raw_recall_scores}")
+            logger.info(f"Maximum recall: {maximum_recall_scores}")
+            logger.info(f"Recall (normalized): {normalized_recall_scores}")
+            logger.info(f"MAP: {map_scores}")
         
         except Exception as e:
             logger.error(e)
+            raise
 
         return {
             "precision": precision_scores,
