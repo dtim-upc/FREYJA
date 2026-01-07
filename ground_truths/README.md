@@ -6,32 +6,35 @@ The data included in this folder presents the following characteristics:
 - FREYJA
 	- [Link](https://mydisk.cs.upc.edu/s/QHJbKcyeacxq35f)
 	- 50 query columns, with k >= 10
-	- Test settings: starting from k = 1 and until k = 10, with k increasing by 1 (i.e. test for k in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), for a total of 10 results.
+	- Test settings: k = 10 and step = 1. That is, starting from k = 1 and until k = 10, with k increasing by 1 (i.e. test for k in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), for a total of 10 results.
 - D3L:
 	- [Link](https://github.com/alex-bogatu/DataSpiders)
 	- **Sample** of 100 query columns, with k >= 100
-	- Test settings: starting from k = 10 and until k = 100, with k increasing by 10 (i.e. test for k in [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]), for a total of 10 results.
+	- Test settings: k = 100 and step = 10. That is, starting from k = 10 and until k = 100, with k increasing by 10 (i.e. test for k in [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]), for a total of 10 results.
 - Santos Small
 	- [Link](https://zenodo.org/records/7758091) (santos_benchmark.zip)
 	- 50 query columns, with k >= 10
-	- Test settings: starting from k = 1 and until k = 10, with k increasing by 1 (i.e. test for k in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), for a total of 10 results.
+	- Test settings: k = 10 and step = 1. That is, starting from k = 1 and until k = 10, with k increasing by 1 (i.e. test for k in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), for a total of 10 results.
 - Santos Big
 	- [Link](https://zenodo.org/records/7758091) (real_data_lake_benchmark.zip)
     - 80 query columns (with no joins defined)
-	- Test settings: none, tested for efficiency.
+	- Test settings: none, tested for efficiency only. The ground truth contains query columns that can be used to test the process, but effectiveness results are not meaningful.
+	- **Important note:** some of the names and/or columns of this ground truth seem to no correspond with the actual dataset. Hence, if discovery tasks are executed, expect some queries to fail (around 15). 
 - TUS Small
 	- [Link](https://github.com/RJMillerLab/table-union-search-benchmark)
     - 100 query columns, with k >= 60
-	- Test settings: starting from k = 10 and until k = 60, with k increasing by 10 (i.e. test for k in [10, 20, 30, 40, 50, 60]), for a total of 6 results.
+	- Test settings: k = 60 and step = 10. That is,starting from k = 10 and until k = 60, with k increasing by 10 (i.e. test for k in [10, 20, 30, 40, 50, 60]), for a total of 6 results.
 - TUS Big
 	- [Link](https://github.com/RJMillerLab/table-union-search-benchmark)
     - **Sample** of 100 query columns, with k >= 60
-	- Test settings: starting from k = 10 and until k = 60, with k increasing by 10 (i.e. test for k in [10, 20, 30, 40, 50, 60]), for a total of 6 results.
+	- Test settings:k = 60 and step = 10. That is, starting from k = 10 and until k = 60, with k increasing by 10 (i.e. test for k in [10, 20, 30, 40, 50, 60]), for a total of 6 results.
 - Omnimatch Culture Recreation
 	- [Link](https://github.com/amazon-science/omnimatch?tab=readme-ov-file#datasets-and-other-files)
 	- **Sample** of 50 query columns, with k >= 30.
-	- Test settings: starting from k = 5 and until k = 30, with k increasing by 5 (i.e. test for k in [5, 10, 15, 20, 25, 30]), for a total of 6 results.
+	- Test settings: k = 30 and step = 5. That is, starting from k = 5 and until k = 30, with k increasing by 5 (i.e. test for k in [5, 10, 15, 20, 25, 30]), for a total of 6 results.
+	- **Important note:** This benchmark requires `varchar_only` to be set to `false` when creating the profiles, as the joins contain dates and numerical data. 
 - Omnimatch City governemtn
 	- [Link](https://github.com/amazon-science/omnimatch?tab=readme-ov-file#datasets-and-other-files)
 	- **Sample** of 50 query columns, with k >= 30.
-	- Test settings: starting from k = 5 and until k = 30, with k increasing by 5 (i.e. test for k in [5, 10, 15, 20, 25, 30]), for a total of 6 results
+	- Test settings: k = 30 and step = 5. That is, starting from k = 5 and until k = 30, with k increasing by 5 (i.e. test for k in [5, 10, 15, 20, 25, 30]), for a total of 6 results
+	- **Important note:** This benchmark requires `varchar_only` to be set to `false` when creating the profiles, as the joins contain dates and numerical data. 

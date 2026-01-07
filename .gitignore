@@ -31,5 +31,5 @@ build
 
 *.png
 
-*.pyc
+__pycache__/
 *.pyc

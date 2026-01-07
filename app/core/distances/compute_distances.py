@@ -130,8 +130,8 @@ class ComputeDistances:
             raise ValueError(f"Could not find profile for ({att1}, {ds1}) or ({att2}, {ds2})")
         
         distances = {
-            "attribute_name_1": att1, "dataset_name_1": ds1,
-            "attribute_name_2": att2, "dataset_name_2": ds2,
+            "target_attr": att1, "target_ds": ds1,
+            "candidate_attr": att2, "candidate_ds": ds2,
         }
 
         # Compute distances for each column
@@ -192,12 +192,12 @@ class ComputeDistances:
         for row in tqdm(self.ground_truth.itertuples(index=False), total=len(self.ground_truth)):
             try:
                 dist_row = self.compute_distances_for_pair(
-                    att1=row.att_name, ds1=row.ds_name,
-                    att2=row.att_name_2, ds2=row.ds_name_2
+                    att1=row.target_attr, ds1=row.target_ds,
+                    att2=row.candidate_attr, ds2=row.candidate_ds
                 )
                 results.append(dist_row)
             except Exception as e:
-                error = f"Failed for {row.att_name} in {row.ds_name} / {row.att_name_2} in {row.ds_name_2}: {e}"
+                error = f"Failed for {row.target_attr} in {row.target_ds} / {row.candidate_attr} in {row.candidate_ds}: {e}"
                 logger.error(error)
                 errors.append(error)
 

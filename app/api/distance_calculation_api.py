@@ -9,17 +9,17 @@ router = APIRouter()
 @router.post("/distances_for_query", response_model=DistancesResponse)
 def compute_distances_for_query(request: DistancesForQueryRequest):
 
-    config = ComputeDistancesConfig(
-        profiles_file_path=Path(request.profiles_file_path),
-        ground_truth_path=None,
-        output_distances_path=Path(request.output_distances_path)
-    )
-
-    distance_computer = ComputeDistances(config)
-    distance_computer.query_attribute = request.query_column
-    distance_computer.query_dataset = request.query_dataset
-
     try:
+        config = ComputeDistancesConfig(
+            profiles_file_path=Path(request.profiles_file_path),
+            ground_truth_path=None,
+            output_distances_path=Path(request.output_distances_path)
+        )
+
+        distance_computer = ComputeDistances(config)
+        distance_computer.query_attribute = request.query_column
+        distance_computer.query_dataset = request.query_dataset
+
         status = distance_computer.generate_distances_for_query()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -31,17 +31,19 @@ def compute_distances_for_query(request: DistancesForQueryRequest):
 @router.post("/distances_for_benchmark", response_model=DistancesResponse)
 def generate_distances_for_benchmark(request: DistancesRequest):
 
-    config = ComputeDistancesConfig(
-        profiles_file_path=Path(request.profiles_file_path),
-        ground_truth_path=Path(request.ground_truth_path),
-        output_distances_path=Path(request.output_distances_path)
-    )
-
-    distance_computer = ComputeDistances(config)
-
     try:
+        config = ComputeDistancesConfig(
+            profiles_file_path=Path(request.profiles_file_path),
+            ground_truth_path=Path(request.ground_truth_path),
+            output_distances_path=Path(request.output_distances_path)
+        )
+
+        distance_computer = ComputeDistances(config)
+
         status = distance_computer.generate_distances_for_benchmark()
+
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
     return DistancesResponse(
@@ -51,15 +53,15 @@ def generate_distances_for_benchmark(request: DistancesRequest):
 @router.post("/distances_for_training_model", response_model=DistancesResponse)
 def generate_distances_for_training_model(request: DistancesRequest):
 
-    config = ComputeDistancesConfig(
-        profiles_file_path=Path(request.profiles_file_path),
-        ground_truth_path=Path(request.ground_truth_path),
-        output_distances_path=Path(request.output_distances_path)
-    )
-
-    distance_computer = ComputeDistances(config)
-
     try:
+        config = ComputeDistancesConfig(
+            profiles_file_path=Path(request.profiles_file_path),
+            ground_truth_path=Path(request.ground_truth_path),
+            output_distances_path=Path(request.output_distances_path)
+        )
+
+        distance_computer = ComputeDistances(config)
+
         status = distance_computer.generate_distances_for_training_model()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
