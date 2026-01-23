@@ -1,5 +1,5 @@
 # FREYJA
-**Important note:** FREYJA was originally built using Java. The initial Java implementation can be fond under the *java_code* branch. Nonetheless, we highlyg recommend using the current, Python-based implementation (*main* branch), as it is less prone to errors and consideraly faster.
+**Important note:** FREYJA was originally built using Java. The initial Java implementation can be fond under the *java_code* branch. Nonetheless, we highly recommend using the current, Python-based implementation (*main* branch), as it is less prone to errors and considerably faster.
  
 ## Introduction
 Welcome to FREYJA! This is a tool used to perform data discovery in large-scale environments such as data lakes. The goal of this project is to provide an easy-to-use and lightweight approach for data discovery, that considerably reduces the time requirements of data discovery tasks whilst keeping a high accuracy in the detection of relevant data.
