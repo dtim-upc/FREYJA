@@ -1,11 +1,14 @@
 # FREYJA
+**Important note:** FREYJA was originally built using Java. The initial Java implementation can be fond under the *java_code* branch. Nonetheless, we highlyg recommend using the current, Python-based implementation (*main* branch), as it is less prone to errors and consideraly faster.
  
 ## Introduction
 Welcome to FREYJA! This is a tool used to perform data discovery in large-scale environments such as data lakes. The goal of this project is to provide an easy-to-use and lightweight approach for data discovery, that considerably reduces the time requirements of data discovery tasks whilst keeping a high accuracy in the detection of relevant data.
 
 We focus on the task of **join discovery** for **tabular data**: given a datalake (i.e. a folder with CSV files) and a query column (i.e. the name of a column of one of the CSV files in the datalake, for which to perform the discovery), the goal is to find other columns (candidate columns) in the datalake that can perform joins with the query column, thus combining the information of several datasets into a single file, increasing the amount of information for downstream analyses. FREYJA ranks all the candidate columns from best to worst, according to the quality of the join.
 
-For further details on how FREYJA works, please refer to the original [paper](https://arxiv.org/abs/2412.06637). Other details, benchmark information and results analyses can be found in the [accompanying website](https://freyja-data-discovery.github.io/).
+For further details on how FREYJA works, please refer to the original paper - [FREYJA: Efficient Join Discovery in Data Lakes](https://arxiv.org/abs/2412.06637). This paper was accepted for publication in TKDE in January 2026. Since then, we have updated the code and performed efficiency improvements. The previous link points to the most up-to-date version of the paper, while also being open access.
+
+Other details, benchmark information and results analyses can be found in the [accompanying website](https://freyja-data-discovery.github.io/).
 
 ## Setting up Freyja
 As of now, FREYJA is an experimental tool, so its full execution is still not fully orchestrated. In any case, operating with Freyja should be quite straightforward, as we offer a simple API to interact with all the necessary functions.
