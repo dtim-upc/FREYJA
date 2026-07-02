@@ -233,38 +233,64 @@ class DataProfilerWorker:
             update_sql = f'UPDATE "{table_name}" SET {", ".join(set_exprs)}'
             con.execute(update_sql)
     
-    def process_csv(self, csv_path: Path) -> Tuple[str, Optional[pd.DataFrame], Optional[str]]:
-        """Process a single CSV file and return its profile."""
-        table_name = csv_path.name
-        
+    def process_file(self, file_path: Path) -> Tuple[str, Optional[pd.DataFrame], Optional[str]]:
+        """Process a single CSV or Parquet file and return its profile."""
+        table_name = file_path.stem  # safer than .name for SQL identifiers
+        suffix = file_path.suffix.lower()
+
         try:
             con = duckdb.connect(database=":memory:")
             try:
-                # Load CSV into a DuckDB table.
-                try:
-                    con.execute(f""" CREATE OR REPLACE TABLE "{table_name}" AS SELECT * FROM read_csv_auto('{csv_path.as_posix()}',
-                            header = TRUE, ignore_errors = TRUE, sample_size = 100, strict_mode = false, parallel = TRUE);""")
-                except Exception:
-                    # Fallback: use pandas for problematic files. That is, read the data as a dataframe skipping the bad rows and then store in DuckDB
-                    df = pd.read_csv(csv_path, dtype=str, on_bad_lines='skip')
-                    con.register('temp_df', df)
-                    con.execute(f'CREATE TABLE "{table_name}" AS SELECT * FROM temp_df')
-                
+                if suffix == ".csv":
+                    try:
+                        con.execute(
+                            f"""
+                            CREATE OR REPLACE TABLE "{table_name}" AS
+                            SELECT *
+                            FROM read_csv_auto('{file_path.as_posix()}', header = TRUE, ignore_errors = TRUE, sample_size = 100, 
+                                                strict_mode = false, parallel = TRUE
+                            );
+                            """
+                        )
+                    except Exception:
+                        # CSV fallback: pandas
+                        df = pd.read_csv(file_path, dtype=str, on_bad_lines="skip")
+                        con.register("temp_df", df)
+                        con.execute(f'CREATE TABLE "{table_name}" AS SELECT * FROM temp_df')
+
+                elif suffix in {".parquet", ".pq"}:
+                    try:
+                        con.execute(
+                            f"""
+                            CREATE OR REPLACE TABLE "{table_name}" AS
+                            SELECT *
+                            FROM read_parquet('{file_path.as_posix()}');
+                            """
+                        )
+                    except Exception:
+                        # Parquet fallback: pandas
+                        df = pd.read_parquet(file_path)
+                        con.register("temp_df", df)
+                        con.execute(f'CREATE TABLE "{table_name}" AS SELECT * FROM temp_df')
+
+                else:
+                    raise ValueError(f"Unsupported file type: {suffix}")
+
                 # Clean data
                 self.clean_column_names(con, table_name)
                 self.clean_string_values(con, table_name)
-                
+
                 # Generate profile
                 profile_df = self.table_profiler.profile_table(con, table_name)
-                
+
             finally:
                 con.close()
-            
-            return (table_name, profile_df, None)
-            
+
+            return table_name, profile_df, None
+
         except Exception as exc:
             tb = traceback.format_exc()
-            return (table_name, None, f"{type(exc).__name__}: {exc}\n{tb}")
+            return table_name, None, f"{type(exc).__name__}: {exc}\n{tb}"
 
 
 class DataProfiler:
@@ -280,20 +306,22 @@ class DataProfiler:
     def normalize_profiles(profiles):
         """Apply Z-score normalization to an entire dataset of profiles, in order to prevent scale problems"""
         from app.core.profiling.metrics import MetricProperties
+        normalized_profiles = profiles.copy()
         metrics_to_norm = MetricProperties().metrics_to_normalize
-        profiles[metrics_to_norm] = (profiles[metrics_to_norm] - profiles[metrics_to_norm].mean()) / profiles[metrics_to_norm].std(ddof=1)
-        profiles[metrics_to_norm] = profiles[metrics_to_norm].fillna(0.0)
-        return profiles
+        normalized_profiles[metrics_to_norm] = (profiles[metrics_to_norm] - profiles[metrics_to_norm].mean()) / profiles[metrics_to_norm].std(ddof=1)
+        normalized_profiles[metrics_to_norm] = normalized_profiles[metrics_to_norm].fillna(0.0)
+        return normalized_profiles
     
     @staticmethod
     def preprocess_profiles(profiles):
         """Precompute numeric, set, and string versions of columns to avoid per-row conversions."""
         from app.core.profiling.metrics import MetricProperties
+        preprocessed_profiles = profiles.copy()
         distance_patterns = MetricProperties().distance_patterns
 
         for metric, pattern in distance_patterns.items():
             if pattern == 'substraction':  # numeric
-                profiles[metric] = pd.to_numeric(profiles[metric], errors="coerce")
+                preprocessed_profiles[metric] = pd.to_numeric(preprocessed_profiles[metric], errors="coerce")
 
             elif pattern == 'containment':  # set containment
                 def to_set(value):
@@ -307,20 +335,24 @@ class DataProfiler:
                             return {value}
                     return {str(value)} if pd.notna(value) else set()
 
-                profiles[metric] = profiles[metric].apply(to_set)
+                preprocessed_profiles[metric] = preprocessed_profiles[metric].apply(to_set)
 
             elif pattern == 'levenshtein':  # string
-                profiles[metric] = profiles[metric].apply(lambda v: str(v) if pd.notna(v) else None)
+                preprocessed_profiles[metric] = preprocessed_profiles[metric].apply(lambda v: str(v) if pd.notna(v) else None)
 
-        return profiles
+        return preprocessed_profiles
         
     
     def generate_profiles_for_datalake(self) -> None:
         """Run the profiler on all CSV files."""
-        csv_files = list(self.config.datalake_path.glob("*.csv"))
+        files = (
+            list(self.config.datalake_path.rglob("*.csv")) +
+            list(self.config.datalake_path.rglob("*.parquet")) +
+            list(self.config.datalake_path.rglob("*.pq"))
+        )
         
-        if not csv_files:
-            error = f"No CSV files found at {self.config.datalake_path}"
+        if not files:
+            error = f"No dataset files found at {self.config.datalake_path}"
             logger.error(error)
             return error
         
@@ -331,9 +363,9 @@ class DataProfiler:
 
         with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
             # Submit all tasks
-            for csv_path in csv_files:
-                table_name = csv_path.name
-                futures.append(executor.submit(self.worker.process_csv, csv_path))
+            for file_path in files:
+                table_name = file_path.name
+                futures.append(executor.submit(self.worker.process_file, file_path))
             
             # Collect results with progress bar
             for future in tqdm(as_completed(futures), total=len(futures), desc="Processing tables"):
@@ -377,7 +409,7 @@ class DataProfiler:
 
         # Preprocess the profiles
         try:
-            all_profiles_preprocessed = self.preprocess_profiles(all_profiles)
+            all_profiles_preprocessed = self.preprocess_profiles(all_profiles_normalized)
             output_profiles_path_preprocessed = output_profiles_path_normalized.with_suffix(".pkl")
             all_profiles_preprocessed.to_pickle(output_profiles_path_preprocessed)
         except Exception as e:
